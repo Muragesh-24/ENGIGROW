@@ -3,21 +3,25 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
 // Create an Express app
 const app = express();
 app.use(cors());
 
+
 // Connect to MongoDB using Mongoose
-mongoose.connect('mongodb://localhost:27017/engigrowdatabase', {
+mongoose.connect(process.env.mongourl, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
   .then(() => {
-    console.log('Connected to MongoDB');
+   
+     console.log('Connected to MongoDB');
   })
   .catch((err) => {
-    console.log('Error connecting to MongoDB:', err);
+   
+    ////// console.log('Error connecting to MongoDB:', err);
   });
 
 // Set up middleware to handle JSON requests
@@ -62,7 +66,7 @@ const Post = mongoose.model('Post', postSchema);
 
 // User schema
 const userSchema = new mongoose.Schema({
-  name: String,
+  name: { type: String, unique: true,required:true },
   college: String,
   interests: String,
   email: { type: String, unique: true },
@@ -194,8 +198,8 @@ app.post('/login', async (req, res) => {
 
 // Profile route (protected)
 app.get('/profile', fetchUser, (req, res) => {
-  const { name, college, interests } = req.user;
-  res.status(200).json({ success: true, message: 'User profile fetched successfully', data: { name, college, interests } });
+  const { name, college, interests,email } = req.user;
+  res.status(200).json({ success: true, message: 'User profile fetched successfully', data: { name, college, interests,email } });
 });
 
 // New post route
@@ -249,7 +253,8 @@ app.get('/api/posts/:postId/allcomments', async (req, res) => {
 
   try {
     const post = await Post.findById(postId); // Find post by ID
-    console.log(post)
+   
+    ////// console.log(post)
     if (!post) {
       return res.status(404).send({ message: 'Post not found' }); // Handle case where post is not found
     }
@@ -407,7 +412,30 @@ app.get('/api/collaboration/allcolabposts', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+// Route to fetch user details by username
+app.get('/api/users/:username', async (req, res) => {
+  const { username } = req.params;
+
+  try {
+    const user = await User.findOne({ name: username });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.status(200).json({
+      name: user.name,
+      email: user.email,
+      college: user.college, // Add additional fields as necessary
+      interests: user.interests, // Example field
+    });
+  } catch (error) {
+    console.error('Error fetching user details:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Start the server
 app.listen(3000, () => {
-  console.log('Server is running on port 3000');
+ 
+  ////// console.log('Server is running on port 3000');
 });
